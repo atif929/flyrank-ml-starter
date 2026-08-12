@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search Intelligence for Content Refresh Prioritization | FlyRank ML Capstone</title>
+<meta name="description" content="A decision-support study on whether search performance and engagement signals can identify webpages to prioritize for content refresh, built on the FlyRank Internship Warehouse dataset.">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph -->
+<meta property="og:type" content="article">
+<meta property="og:title" content="Search Intelligence for Content Refresh Prioritization">
+<meta property="og:description" content="Can search performance and engagement metrics identify webpages that should be prioritized for content refresh? A FlyRank ML capstone study.">
+<meta property="og:image" content="assets/images/og-cover.png">
+<meta property="og:url" content="https://YOUR_USERNAME.github.io/YOUR_REPO/">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Search Intelligence for Content Refresh Prioritization">
+<meta name="twitter:description" content="Can search performance and engagement metrics identify webpages that should be prioritized for content refresh? A FlyRank ML capstone study.">
+<meta name="twitter:image" content="assets/images/og-cover.png">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<header class="site-header">
+  <div class="header-inner">
+    <span class="brand">Search Intelligence Research</span>
+    <button class="nav-toggle" id="navToggle" aria-expanded="false" aria-controls="siteNav" aria-label="Toggle navigation menu">
+      <span></span><span></span><span></span>
+    </button>
+    <nav id="siteNav" class="site-nav" aria-label="Paper sections">
+      <a href="#abstract">Abstract</a>
+      <a href="#introduction">Introduction</a>
+      <a href="#data">Data</a>
+      <a href="#methodology">Methodology</a>
+      <a href="#results">Results</a>
+      <a href="#limitations">Limitations</a>
+      <a href="#recommendations">Recommendations</a>
+      <a href="#reproducibility">Reproducibility</a>
+      <a href="#acknowledgements">Acknowledgements</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main-content">
+
+  <section class="hero" aria-labelledby="paper-title">
+    <p class="hero-eyebrow">FlyRank Machine Learning Internship — Capstone</p>
+    <h1 id="paper-title">Search Intelligence for Content Refresh Prioritization Using Search Performance Signals</h1>
+    <p class="hero-meta">Decision-support model &middot; March 2026 dataset window &middot; Decision Tree vs. rule-based baseline</p>
+  </section>
+
+  <section id="abstract" class="section card" aria-labelledby="abstract-heading">
+    <h2 id="abstract-heading">Abstract</h2>
+    <p>This study investigates whether search performance and user engagement signals&mdash;impressions, clicks, average position, pageviews, and sessions&mdash;can identify webpages that should be prioritized for content refresh. Using a mid-panel month (March 2026) of the FlyRank Internship Warehouse dataset, filtered to rows with confirmed search and analytics access, a proxy refresh-priority label was built from search impressions and click-through rate, and a Decision Tree classifier was trained against a rule-based baseline that uses the same thresholds as the label, on an identical 80/20 split. Because the baseline is constructed from the exact same rule as the label, it scores a trivial 100% on every metric by definition, not by predictive skill. The Decision Tree, which was never given the rule directly and only saw the five raw signals, still reconstructed the label with 98.45% accuracy and a 96.4% F1 score. This shows the label is highly learnable from the underlying signals, but the result should be read cautiously: two of those signals (impressions and clicks) are the same values the label's CTR threshold is computed from, so this is closer to a consistency check than proof of independent predictive power. The model is intended strictly as a decision-support signal that helps SEO teams focus manual review on high-impression, low-click pages rather than reviewing every page individually.</p>
+  </section>
+
+  <section id="introduction" class="section" aria-labelledby="intro-heading">
+    <h2 id="intro-heading">Introduction</h2>
+    <p><strong>Research question:</strong> Can search performance and user engagement metrics be used to identify webpages that should be prioritized for content refresh?</p>
+    <p><strong>Business decision:</strong> Content teams and SEO specialists currently review pages manually, one at a time, with no systematic way to decide which pages deserve attention first. This project supports that decision by ranking pages using search and engagement signals, so teams can focus limited review time on the highest-priority content rather than working through every page.</p>
+  </section>
+
+  <section id="data" class="section" aria-labelledby="data-heading">
+    <h2 id="data-heading">Data</h2>
+
+    <div class="data-grid">
+      <div class="data-item">
+        <h3>Dataset release</h3>
+        <p>FlyRank Internship Warehouse (public internship release), hosted on Hugging Face.</p>
+      </div>
+      <div class="data-item">
+        <h3>Tables used</h3>
+        <p><code>fact_content_daily_performance</code> (primary), <code>dim_content</code> (reference only).</p>
+      </div>
+      <div class="data-item">
+        <h3>Time window</h3>
+        <p>March 2026 (<code>month=2026-03</code>), a mid-panel month, per internship guidance to avoid the outcome-window risk of the final sampled month.</p>
+      </div>
+      <div class="data-item">
+        <h3>Sample size</h3>
+        <p>10,000 rows &times; 31 columns, read from the Hugging Face-hosted Parquet partition via DuckDB, filtered to rows with confirmed GSC and GA4 access.</p>
+      </div>
+      <div class="data-item">
+        <h3>Excluded</h3>
+        <p>The final month of the dataset (held out as a sealed test window to avoid leakage), rows without confirmed search or analytics access, and all client identifiers, URLs, search queries, and private or credential-bearing fields.</p>
+      </div>
+      <div class="data-item">
+        <h3>Public-safe wording</h3>
+        <p>No client names, domains, URLs, search queries, or credentials appear anywhere in this paper or its source notebook.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="methodology" class="section" aria-labelledby="method-heading">
+    <h2 id="method-heading">Methodology</h2>
+
+    <ol class="timeline">
+      <li>
+        <h3>Assumptions</h3>
+        <p>Search performance and engagement metrics are assumed to contain useful signal for identifying pages worth reviewing for refresh. The model is designed as a decision-support tool, not an automated decision-maker.</p>
+      </li>
+      <li>
+        <h3>Features</h3>
+        <p><code>gsc_impressions</code>, <code>gsc_clicks</code>, <code>gsc_avg_position</code> (derived from the warehouse's position sum), <code>ga4_pageviews</code>, <code>ga4_sessions</code> &mdash; each is knowable at the moment a refresh decision would be made, so none introduces future information.</p>
+      </li>
+      <li>
+        <h3>Label definition</h3>
+        <p>A page is labeled a refresh opportunity when it has above-median impressions (median = 126.0) and a click-through rate at or below the median (median CTR &asymp; 0.28%). CTR is computed as <code>gsc_clicks / gsc_impressions</code>. Of the 10,000 sampled rows, 7,806 were labeled 0 and 2,194 were labeled 1.</p>
+      </li>
+      <li>
+        <h3>Baseline</h3>
+        <p>The baseline applies the same median-impressions, median-CTR rule used to define the label itself, rather than an independent rule. This keeps the comparison consistent, but it also means the baseline's score reflects the label's own definition, not independent predictive skill &mdash; addressed directly in Results.</p>
+      </li>
+      <li>
+        <h3>Validation design</h3>
+        <p>Both the baseline and the Decision Tree were evaluated on the same 80/20 train-test split (<code>random_state=42</code>) of the same sampled dataset and feature set.</p>
+      </li>
+      <li>
+        <h3>Leakage checks</h3>
+        <p>No future performance metrics or manually assigned labels were used as inputs. Client and content identifiers were excluded before feature construction, since they are pseudonymous grouping keys, not predictive signals.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section id="results" class="section" aria-labelledby="results-heading">
+    <h2 id="results-heading">Results</h2>
+    <p>A Decision Tree classifier (<code>max_depth=5</code>) was trained on the selected features and compared with the rule-based baseline on the same test split.</p>
+
+    <div class="table-wrap">
+      <table>
+        <caption>Baseline vs. Decision Tree, same split</caption>
+        <thead>
+          <tr><th scope="col">Model</th><th scope="col">Accuracy</th><th scope="col">Precision</th><th scope="col">Recall</th><th scope="col">F1 Score</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Baseline Rule</td><td>100.0%</td><td>100.0%</td><td>100.0%</td><td>100.0%</td></tr>
+          <tr><td>Decision Tree</td><td>98.45%</td><td>100.0%</td><td>93.0%</td><td>96.4%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="results-note"><strong>Reading these numbers honestly:</strong> the baseline's perfect 100% across every metric isn't a finding &mdash; it's built into how it was constructed. The baseline uses the exact same impressions/CTR thresholds that define the label itself, so it is, by design, comparing the label to a copy of itself. The more informative number is the Decision Tree's: trained only on the five raw signals and never given the threshold rule directly, it reconstructed the same label with 98.45% accuracy and a 96.4% F1 score. That's a real result, but a modest one &mdash; two of its five inputs (impressions and clicks) are the same values the label's CTR threshold is computed from, so this demonstrates the label is learnable from its own underlying signals more than it demonstrates independent predictive power on unseen relationships.</p>
+
+    <div class="charts">
+      <figure>
+        <img src="assets/images/target_distribution.png" alt="Bar chart of refresh_target class counts: 7,806 pages labeled 0 (no refresh priority) and 2,194 labeled 1 (refresh priority), out of 10,000 sampled rows.">
+        <figcaption>Figure 1. Refresh-target class distribution</figcaption>
+      </figure>
+      <figure>
+        <img src="assets/images/feature_importance.png" alt="Horizontal bar chart of Decision Tree feature importances across gsc_impressions, gsc_clicks, gsc_avg_position, ga4_pageviews, and ga4_sessions.">
+        <figcaption>Figure 2. Decision Tree feature importance</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="limitations" class="section callout" aria-labelledby="limitations-heading">
+    <h2 id="limitations-heading">Limitations</h2>
+    <ul>
+      <li>Uses only historical search and engagement data available in the FlyRank internship dataset, filtered to rows with confirmed GSC and GA4 access.</li>
+      <li>The target is a rule-based proxy (above-median impressions, at-or-below-median CTR), not an actual editorial refresh decision, and should be read as a proxy rather than ground truth.</li>
+      <li>The baseline is defined by the same rule as the label, so its 100% score reflects that construction rather than predictive skill; it is not an independent point of comparison.</li>
+      <li>Two of the Decision Tree's five features (impressions, clicks) are the same values the label's CTR threshold is derived from, so its high accuracy is closer to a consistency check than a test of independent predictive power.</li>
+      <li>Evaluated on a single sampled month and split; not validated across different time periods.</li>
+      <li>Findings are observed and directional. They support a decision, they do not prove causation, and they make no claim about how any search engine's ranking algorithm behaves.</li>
+    </ul>
+  </section>
+
+  <section id="recommendations" class="section" aria-labelledby="recs-heading">
+    <h2 id="recs-heading">Ranked Recommendations</h2>
+    <p>The model ranks pages that receive relatively high search visibility but capture few clicks. These are directional candidates for content review, not guaranteed optimization opportunities, and should be validated by SEO specialists before action is taken.</p>
+    <ol class="rec-cards">
+      <li><span class="rec-num">1</span><p>Review pages with high impressions and very low click-through rate first.</p></li>
+      <li><span class="rec-num">2</span><p>Improve titles and meta descriptions where search visibility exists but click-through is weak.</p></li>
+      <li><span class="rec-num">3</span><p>Refresh outdated content while preserving existing rankings.</p></li>
+      <li><span class="rec-num">4</span><p>Monitor pages after updates before making further changes.</p></li>
+      <li><span class="rec-num">5</span><p>Re-score pages periodically as new performance data becomes available.</p></li>
+    </ol>
+  </section>
+
+  <section id="reproducibility" class="section" aria-labelledby="repro-heading">
+    <h2 id="repro-heading">Reproducibility</h2>
+    <p>The full workflow&mdash;data access, feature construction, baseline scoring, model training, and evaluation&mdash;is implemented in <code>work/notebooks/capstone.ipynb</code> in the project repository. The notebook downloads the March 2026 partition of <code>fact_content_daily_performance</code> from the FlyRank Internship Warehouse on Hugging Face via an authenticated read token, filters to rows with confirmed GSC and GA4 access, engineers the features and label described above, and trains the baseline and Decision Tree on an identical split for direct comparison. Running the notebook top to bottom reproduces every number reported on this page.</p>
+  </section>
+
+</main>
+
+<footer id="acknowledgements" class="site-footer" aria-labelledby="ack-heading">
+  <h2 id="ack-heading">Acknowledgements</h2>
+  <p>Built on the FlyRank ML Internship dataset. <a href="https://flyrank.ai" target="_blank" rel="noopener noreferrer">flyrank.ai</a></p>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>
